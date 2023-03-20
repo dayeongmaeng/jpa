@@ -7,7 +7,7 @@ spring:
 
   jpa:
     hibernate:
-      ddl-auto: none #자동 테이블 생성 모드
+      ddl-auto: create
     properties:
       hibernate:
         show_sql: true
