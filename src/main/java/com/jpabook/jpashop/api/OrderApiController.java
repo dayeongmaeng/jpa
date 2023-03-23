@@ -8,9 +8,10 @@ import com.jpabook.jpashop.domain.OrderItem;
 import com.jpabook.jpashop.domain.OrderStatus;
 import com.jpabook.jpashop.repository.OrderRepository;
 import com.jpabook.jpashop.repository.OrderSearch;
+import com.jpabook.jpashop.repository.order.query.OrderQueryDto;
+import com.jpabook.jpashop.repository.order.query.OrderQueryRepository;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.stream.Collectors;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -22,9 +23,10 @@ import org.springframework.web.bind.annotation.RestController;
 public class OrderApiController {
 
     private final OrderRepository orderRepository;
+    private final OrderQueryRepository orderQueryRepository;
 
     @GetMapping("/api/v1/orders")
-    public List<Order> ordetsV1() {
+    public List<Order> ordersV1() {
         List<Order> all = orderRepository.findAllByString(new OrderSearch());
         for (Order order : all) {
             order.getMember().getName();
@@ -36,27 +38,32 @@ public class OrderApiController {
     }
 
     @GetMapping("/api/v2/orders")
-    public List<OrderDto> ordetsV2() {
+    public List<OrderDto> ordersV2() {
         return orderRepository.findAllByString(new OrderSearch()).stream()
             .map(OrderDto::new)
             .collect(toList());
     }
 
     @GetMapping("/api/v3/orders")
-    public List<OrderDto> ordetsV3() {
+    public List<OrderDto> ordersV3() {
         return orderRepository.findAllWithItem().stream()
             .map(OrderDto::new)
             .collect(toList());
     }
 
     @GetMapping("/api/v3.1/orders")
-    public List<OrderDto> ordetsV3_page(
+    public List<OrderDto> ordersV3_page(
         @RequestParam(value = "offset", defaultValue = "0") int offset,
         @RequestParam(value = "limit", defaultValue = "100") int limit) {
-        
+
         return orderRepository.findAllWithMemberDelivery(offset, limit).stream()
             .map(OrderDto::new)
             .collect(toList());
+    }
+
+    @GetMapping("/api/v4/orders")
+    public List<OrderQueryDto> ordersV4() {
+        return orderQueryRepository.findOrderQueryDtos();
     }
 
     @Getter
