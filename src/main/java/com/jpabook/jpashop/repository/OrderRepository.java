@@ -1,8 +1,15 @@
 package com.jpabook.jpashop.repository;
 
+import static com.jpabook.jpashop.domain.QMember.*;
+import static com.jpabook.jpashop.domain.QOrder.*;
+
 import com.jpabook.jpashop.domain.Member;
 import com.jpabook.jpashop.domain.Order;
-import java.util.Arrays;
+import com.jpabook.jpashop.domain.OrderStatus;
+import com.jpabook.jpashop.domain.QMember;
+import com.jpabook.jpashop.domain.QOrder;
+import com.querydsl.core.types.dsl.BooleanExpression;
+import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 import org.springframework.util.StringUtils;
@@ -18,6 +25,7 @@ import java.util.List;
 public class OrderRepository {
 
     private final EntityManager em;
+    private final JPAQueryFactory query;
 
     public void save(Order order) {
         em.persist(order);
@@ -25,6 +33,11 @@ public class OrderRepository {
 
     public Order findOne(Long id) {
         return em.find(Order.class, id);
+    }
+
+    public OrderRepository(EntityManager em) {
+        this.em = em;
+        this.query = new JPAQueryFactory(em);
     }
 
     public List<Order> findAllByString(OrderSearch orderSearch) {
@@ -87,6 +100,30 @@ public class OrderRepository {
         return query.getResultList();
     }
 
+    public List<Order> findAll(OrderSearch orderSearch) {
+        return query
+            .select(order)
+            .from(order)
+            .join(order.member, member)
+            .where(statudEq(orderSearch.getOrderStatus()), nameLike(orderSearch.getMemberName()))
+            .limit(1000)
+            .fetch();
+    }
+
+    private BooleanExpression nameLike(String memberName) {
+        if (!StringUtils.hasText(memberName)) {
+            return null;
+        }
+        return member.name.like(memberName);
+    }
+
+    private BooleanExpression statudEq(OrderStatus statusCond) {
+        if (statusCond == null) {
+            return null;
+        }
+        return order.status.eq(statusCond);
+    }
+
     public List<Order> findAllWithMemberDelivery() {
         return em.createQuery(
             "select o from Order o" +
@@ -114,5 +151,4 @@ public class OrderRepository {
             .setMaxResults(limit)
             .getResultList();
     }
-
 }
